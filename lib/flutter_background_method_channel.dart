@@ -34,7 +34,7 @@ class MethodChannelFlutterBackground extends FlutterBackgroundPlatform {
           _ARG_APP_CALLBACK_HANDLE_: appCallbackRawHandle,
           _ARG_INTERNAL_CALLBACK_HANDLE: internalRawHandle,
           _ARG_INTERNAL_CALLBACK_NAME: "_pluginBackgroundInternalCallback", //For ios
-          _ARG_INTERNAL_CALLBACK_URL_: "package:plugin_platform_interface"
+          _ARG_INTERNAL_CALLBACK_URL_: "package:flutter_background/flutter_background_method_channel.dart"
         });
         _bgHandlerInitialized = true;
         return result;
