@@ -16,6 +16,7 @@ import io.flutter.embedding.engine.dart.DartExecutor.DartCallback
 import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.view.FlutterCallbackInformation
 import java.lang.Error
+import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.LinkedList
 
@@ -30,10 +31,10 @@ internal object BackgroundEmitter : MethodCallHandler {
     private val flutterLoader = FlutterLoader()
     private lateinit var flutterEngine: FlutterEngine
     private val pendingEventsQueue: MutableList<Map<String, Any?>> = Collections.synchronizedList(LinkedList())
-
+    private lateinit var contextHolder: WeakReference<Context>
     internal fun initialize(context: Context) {
-        if (!ready) {
-            initializeBackgroundEmitter(context)
+        if(!this::contextHolder.isInitialized){
+            storeContext(context)
         }
     }
 
@@ -50,6 +51,7 @@ internal object BackgroundEmitter : MethodCallHandler {
         } else {
             Log.i(LOG_TAG, "BackgroundEmitter not ready yet, enqueue event until it will be ready")
             enqueuePendingEvent(event)
+            initializeBackgroundEmitter()
         }
     }
 
@@ -59,19 +61,23 @@ internal object BackgroundEmitter : MethodCallHandler {
         }
     }
 
-    private fun initializeBackgroundEmitter(context: Context) {
-        Log.i(LOG_TAG, "initializeBackgroundEmitter: ")
+    private fun storeContext(context: Context){
         if (!PluginStorage.backgroundAllowed()) {
             Log.i(LOG_TAG, "Background work not allowed, To enable background use the registerBackgroundCallback in your app main.dart")
             return
         }
+        contextHolder = WeakReference(context)
+    }
 
+    private fun initializeBackgroundEmitter() {
         if (!flutterLoader.initialized() && !this::flutterEngine.isInitialized) {
-            flutterLoader.let {
-                it.startInitialization(context.applicationContext)
-                it.ensureInitializationCompleteAsync(context.applicationContext, null, handler) {
-                    Log.i(LOG_TAG, "ensureInitializationComplete, completed")
-                    invokePluginInternalCallbackInBackground(context) //Call single shot when created..
+            contextHolder.get()?.applicationContext?.let { applicationContext ->
+                flutterLoader.let {
+                    it.startInitialization(applicationContext)
+                    it.ensureInitializationCompleteAsync(applicationContext, null, handler) {
+                        Log.i(LOG_TAG, "ensureInitializationComplete, completed")
+                        invokePluginInternalCallbackInBackground(applicationContext) //Call single shot when created..
+                    }
                 }
             }
         } else {
@@ -80,24 +86,26 @@ internal object BackgroundEmitter : MethodCallHandler {
     }
 
     private fun invokePluginInternalCallbackInBackground(context: Context) {
-        runAsync(operation = {
-            val internalCallbackRawHandle = PluginStorage.getInternalRawHandle()
-            Log.i(LOG_TAG, "invokePluginInternalCallbackInBackground: internalCallbackRawHandle $internalCallbackRawHandle")
-            if (internalCallbackRawHandle != -1L) {
-                flutterEngine = FlutterEngine(context.applicationContext)
-                Log.i(LOG_TAG, "executeDartCallback: backgroundCallback available")
-                val flutterCallback = FlutterCallbackInformation.lookupCallbackInformation(internalCallbackRawHandle)
-                val dartExecutor = flutterEngine.dartExecutor
-                initializeInternalMethodChannel(dartExecutor)
-                val assets: AssetManager = context.assets
-                val dartCallback = DartCallback(assets, flutterLoader.findAppBundlePath(), flutterCallback)
+        val internalCallbackRawHandle = PluginStorage.getInternalRawHandle()
+
+        if (internalCallbackRawHandle != -1L) {
+            Log.i(LOG_TAG, "executeDartCallback: backgroundCallback available")
+            flutterEngine = FlutterEngine(context)
+            val flutterCallback = FlutterCallbackInformation.lookupCallbackInformation(internalCallbackRawHandle)
+            val dartExecutor = flutterEngine.dartExecutor
+            initializeInternalMethodChannel(dartExecutor)
+            val assets: AssetManager = context.assets
+            val dartCallback = DartCallback(assets, flutterLoader.findAppBundlePath(), flutterCallback)
+
+            runAsync(operation = {
+                Log.i(LOG_TAG, "invokePluginInternalCallbackInBackground: internalCallbackRawHandle $internalCallbackRawHandle")
                 dartExecutor.executeDartCallback(dartCallback)
-            } else {
-                Log.e(LOG_TAG, "Invalid internal callback raw handler..")
-            }
-        }, error = {
-            Log.e(LOG_TAG, "Something went wrong: ${it.message}")
-        })
+            }, error = {
+                Log.e(LOG_TAG, "Something went wrong: ${it.message}")
+            })
+        } else {
+            Log.e(LOG_TAG, "Invalid internal callback raw handler..")
+        }
     }
 
     private fun initializeInternalMethodChannel(dartExecutor: DartExecutor) {

@@ -11,7 +11,7 @@ class BootCompleteReceiver : BroadcastReceiver(){
         val action = intent.action
         if(action == Intent.ACTION_BOOT_COMPLETED){
             Log.i("BootCompleteReceiver", "onReceive: ")
-            FlutterBackgroundPlugin.emitBackgroundEvent(mapOf("BootComplete" to ""))
+            FlutterBackgroundPlugin.emitBackgroundEvent(mapOf("action" to "BootComplete"))
         }
     }
 }

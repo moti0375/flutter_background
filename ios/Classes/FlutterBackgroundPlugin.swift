@@ -5,7 +5,10 @@ import os.log
 
 public class FlutterBackgroundPlugin: NSObject, FlutterPlugin {
     private static let logger = OSLog(subsystem: "com.bartovapps.flutter_background", category: "FlutterBackgroundPlugin")
-
+    private static let ARG_INTERNAL_CALLBACK_NAME = "internalCallbackName";
+    private static let ARG_INTERNAL_CALLBACK_URL = "internalCallbackNameUrl";
+    internal static let ARG_APP_CALLBACK_HANDLE = "appCallbackRawHandle";
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "com.bartovapps.flutter_background/method_channel", binaryMessenger: registrar.messenger())
         let instance = FlutterBackgroundPlugin()
@@ -27,9 +30,9 @@ public class FlutterBackgroundPlugin: NSObject, FlutterPlugin {
     private func saveRawHandles(call: FlutterMethodCall, result: @escaping FlutterResult){
         
         guard let arguments = call.arguments as? [String: Any],
-              let appCallbackHandle = arguments["appCallbackRawHandle"] as? Int64,
-              let internalEntryPoint = arguments["internalCallbackName"] as? String,
-              let internalEntryPointUrl = arguments["internalCallbackNameUrl"] as? String
+              let appCallbackHandle = arguments[FlutterBackgroundPlugin.ARG_APP_CALLBACK_HANDLE] as? Int64,
+              let internalEntryPoint = arguments[FlutterBackgroundPlugin.ARG_INTERNAL_CALLBACK_NAME] as? String,
+              let internalEntryPointUrl = arguments[FlutterBackgroundPlugin.ARG_INTERNAL_CALLBACK_URL] as? String
               else {
                   result(FlutterError(code: "", message: "Unable to correctly parse input arguments", details: call.arguments))
                   return
@@ -40,7 +43,7 @@ public class FlutterBackgroundPlugin: NSObject, FlutterPlugin {
         let internalEntryPointSaved = PluginStorage.shared.saveInternalEntryPointName(entryPointName: internalEntryPoint)
         let internalEntryPointUrlSaved = PluginStorage.shared.saveinternalCallbackNameUrl(url: internalEntryPointUrl)
         
-        os_log("savedAppRawHandle: %d, internalEntryPointSaved: %d, internalEntryPointUrlSaved: d", log: FlutterBackgroundPlugin.logger, type: .debug, savedAppRawHandle, internalEntryPointSaved, internalEntryPointUrlSaved)
+        os_log("savedAppRawHandle: %@, internalEntryPointSaved: %@, internalEntryPointUrlSaved: %@", log: FlutterBackgroundPlugin.logger, type: .debug, "\(savedAppRawHandle)", "\(internalEntryPointSaved)", "\(internalEntryPointUrlSaved)")
         
         if(savedAppRawHandle || internalEntryPointSaved || internalEntryPointUrlSaved){
             os_log("Saved dart callback references", log: FlutterBackgroundPlugin.logger, type: .debug)

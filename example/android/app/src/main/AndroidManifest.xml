@@ -4,7 +4,7 @@
 
     <application
         android:label="flutter_background_example"
-        android:name="${applicationName}"
+        android:name=".MyApplication"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
