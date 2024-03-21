@@ -19,7 +19,7 @@ public class BackgroundEmitter: NSObject{
     private var internalMethodChannel : FlutterMethodChannel!
     private var ready: Bool = false
     private var flutterEngine : FlutterEngine?
-    private var eventsQueue = DispatchQueue(label: "com.bartovapps.flutter_background_plugin", qos: .utility)
+    private var eventsQueue = DispatchQueue.main
     private var pendingEvents: [[String: Any?]] = []
 
     
@@ -29,8 +29,8 @@ public class BackgroundEmitter: NSObject{
             var arguments : [String: Any?] = [:]
             arguments[FlutterBackgroundPlugin.ARG_APP_CALLBACK_HANDLE] = Int(appCallbackRawHandle)
             arguments["message"] = event
-            eventsQueue.sync {
-                internalMethodChannel.invokeMethod("FlutterBackground#BackgroundMessage", arguments: arguments)
+            eventsQueue.async {
+                self.internalMethodChannel.invokeMethod("FlutterBackground#BackgroundMessage", arguments: arguments)
             }
         } else {
             enqueuePendingEvent(event: event)
@@ -46,7 +46,7 @@ public class BackgroundEmitter: NSObject{
     
     
     func initializeFlutterEngine(){
-        if PluginStorage.shared.backgroundAllowed() && flutterEngine == nil{
+        if PluginStorage.shared.backgroundAllowed(){
             os_log("initializeFlutterEngine called: backgroundAllowed!, initializing FlutterEngine in background", log: logger, type: .debug)
             let internalEntryPointName = PluginStorage.shared.getInternalEntryPointName()
             let internalEntryPointUrl = PluginStorage.shared.getinternalCallbackNameUrl()
