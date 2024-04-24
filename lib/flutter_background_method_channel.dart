@@ -6,14 +6,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_background/internal_callback/internal_background_callback.dart';
 import 'package:flutter_background/utils/constants.dart';
 import 'flutter_background_platform_interface.dart';
-const String _LOG_TAG = "[FlutterBackgroundPlugin]";
 
 /// An implementation of [FlutterBackgroundPlatform] that uses method channels.
 class MethodChannelFlutterBackground extends FlutterBackgroundPlatform {
 
+  static const _METHOD_CHANNEL_NAME = "com.bartovapps.flutter_background/method_channel";
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final methodChannel = const MethodChannel('com.bartovapps.flutter_background/method_channel');
+  final methodChannel = const MethodChannel(_METHOD_CHANNEL_NAME);
   bool _bgHandlerInitialized = false;
 
   @override

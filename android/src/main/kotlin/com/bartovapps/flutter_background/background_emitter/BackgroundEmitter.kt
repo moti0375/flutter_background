@@ -7,6 +7,7 @@ import android.os.Looper
 import android.util.Log
 import com.bartovapps.flutter_background.FlutterBackgroundPlugin.Companion.ARG_APP_CALLBACK_HANDLE
 import com.bartovapps.flutter_background.storage.PluginStorage
+import com.bartovapps.flutter_background.utils.ContextHolder
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -28,13 +29,14 @@ internal object BackgroundEmitter : MethodCallHandler {
     private val handler = Handler(Looper.getMainLooper())
     private var internalMethodChannel: MethodChannel? = null
     private var ready: Boolean = false
-    private val flutterLoader = FlutterLoader()
+    private lateinit var flutterLoader : FlutterLoader
     private lateinit var flutterEngine: FlutterEngine
     private val pendingEventsQueue: MutableList<Map<String, Any?>> = Collections.synchronizedList(LinkedList())
-    private lateinit var contextHolder: WeakReference<Context>
-    internal fun initialize(context: Context) {
-        if(!this::contextHolder.isInitialized){
-            storeContext(context)
+
+    internal fun initialize(force: Boolean = false) {
+        if(force){
+            Log.i(LOG_TAG, "forced to initialize background emitter")
+            initializeBackgroundEmitter()
         }
     }
 
@@ -66,22 +68,19 @@ internal object BackgroundEmitter : MethodCallHandler {
             Log.i(LOG_TAG, "Background work not allowed, To enable background use the registerBackgroundCallback in your app main.dart")
             return
         }
-        contextHolder = WeakReference(context)
     }
 
     private fun initializeBackgroundEmitter() {
-        if (!flutterLoader.initialized() && !this::flutterEngine.isInitialized) {
-            contextHolder.get()?.applicationContext?.let { applicationContext ->
-                flutterLoader.let {
-                    it.startInitialization(applicationContext)
-                    it.ensureInitializationCompleteAsync(applicationContext, null, handler) {
-                        Log.i(LOG_TAG, "ensureInitializationComplete, completed")
-                        invokePluginInternalCallbackInBackground(applicationContext) //Call single shot when created..
-                    }
+        Log.i(LOG_TAG, "initializeBackgroundEmitter: ")
+        this.flutterLoader = FlutterLoader()
+        ContextHolder.context.applicationContext?.let { applicationContext ->
+            flutterLoader.let {
+                it.startInitialization(applicationContext)
+                it.ensureInitializationCompleteAsync(applicationContext, null, handler) {
+                    Log.i(LOG_TAG, "ensureInitializationComplete, completed")
+                    invokePluginInternalCallbackInBackground(applicationContext) //Call single shot when created..
                 }
             }
-        } else {
-            Log.i("BackgroundEventEmitter", "No need to  initializeFlutterEngine: ")
         }
     }
 
@@ -116,7 +115,7 @@ internal object BackgroundEmitter : MethodCallHandler {
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         Log.i(LOG_TAG, "onMethodCall: ${call.method}")
-        if (call.method == "FlutterBackground#Initialize") {
+        if (call.method == "FlutterBackground#OnListen") {
             Log.i(LOG_TAG, "Background isolate initialized")
             ready = true
             flushPendingEventsQueue()

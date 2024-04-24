@@ -2,12 +2,13 @@ package com.bartovapps.flutter_background.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.bartovapps.flutter_background.utils.ContextHolder
 
 object PluginStorage {
 
-    lateinit var sharedPreferences : SharedPreferences
-    fun initialize(context: Context) {
-        sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private lateinit var sharedPreferences : SharedPreferences
+    fun initialize() {
+        sharedPreferences = ContextHolder.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     fun saveAppRawHandle(rawHandle: Long) : Boolean {

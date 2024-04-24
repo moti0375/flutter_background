@@ -5,15 +5,15 @@ import android.util.Log
 import androidx.startup.Initializer
 import com.bartovapps.flutter_background.background_emitter.BackgroundEmitter
 import com.bartovapps.flutter_background.storage.PluginStorage
+import com.bartovapps.flutter_background.utils.ContextHolder
 
 internal class BackgroundPluginInitializer : Initializer<Unit> {
 
     override fun create(context: Context) {
         Log.i("BackgroundInitializer", "create: ")
-        PluginStorage.initialize(context)
-        BackgroundEmitter.initialize(context)
-       // ContextHolder.setContext(context)
-//        BackgroundEventEmitter.create()
+        ContextHolder.initialize(context)
+        PluginStorage.initialize()
+        BackgroundEmitter.initialize()
     }
 
     override fun dependencies(): MutableList<Class<out Initializer<*>>> {

@@ -9,25 +9,23 @@ Future<dynamic> _internalMethodCallHandler(MethodCall call) async {
   String method = call.method;
   print("$_LOG_TAG received $method, with arguments: ${call.arguments}");
   if (method == 'FlutterBackground#BackgroundMessage') {
-    print("[BackgroundPluginInitializer]: FlutterBackground#BackgroundMessage, about to forward event to app background callback..");
+     _processBackgroundMessage(methodCall: call);
+  }
+}
 
-    try {
-      var appCallbackHandleId = call.arguments[ARG_APP_CALLBACK_HANDLE];
-      print('$LogicalKeyboardKey: appCallbackHandleId: $appCallbackHandleId ${appCallbackHandleId.runtimeType}');
+void _processBackgroundMessage({required MethodCall methodCall}) async {
+  try {
+    var appCallbackHandleId = methodCall.arguments[ARG_APP_CALLBACK_HANDLE];
+    print('$_LOG_TAG: appCallbackHandleId: $appCallbackHandleId ${appCallbackHandleId.runtimeType}');
 
-      final CallbackHandle appCallbackHandle = CallbackHandle.fromRawHandle(appCallbackHandleId); //Getting the host app callback raw handle from call
-      print('$_LOG_TAG: appCallbackHandle: $appCallbackHandle');
+    final CallbackHandle appCallbackHandle = CallbackHandle.fromRawHandle(appCallbackHandleId); //Getting the host app callback raw handle from call
 
-      final appCallback = PluginUtilities.getCallbackFromHandle(appCallbackHandle)! as Future<void> Function(Map<String, dynamic>);
+    final appCallback = PluginUtilities.getCallbackFromHandle(appCallbackHandle)! as Future<void> Function(Map<String, dynamic>);
 
-      Map<String, dynamic> sdkEventEmitterMessage = Map<String, dynamic>.from(call.arguments[ARG_MESSAGE]);
-      print('$_LOG_TAG: backgroundMessage: $sdkEventEmitterMessage');
-      await appCallback(sdkEventEmitterMessage); //Calls app headless callback!!
-    } catch (e) {
-      print('$_LOG_TAG FlutterFire Messaging: An error occurred in your background messaging handler: ${e}');
-      print(e);
-    }
-
+    Map<String, dynamic> sdkEventEmitterMessage = Map<String, dynamic>.from(methodCall.arguments[ARG_MESSAGE]);
+    await appCallback(sdkEventEmitterMessage); //Calls app headless callback!!
+  } catch (e) {
+    print('$_LOG_TAG FlutterFire Messaging: An error occurred in your background messaging handler: ${e}');
   }
 }
 
@@ -38,5 +36,5 @@ void pluginBackgroundInternalCallback() {
   MethodChannel internalMethodChannel =
   const MethodChannel('com.bartovapps.flutter_background/internal_method_channel');
   internalMethodChannel.setMethodCallHandler(_internalMethodCallHandler);
-  internalMethodChannel.invokeMethod("FlutterBackground#Initialize");
+  internalMethodChannel.invokeMethod("FlutterBackground#OnListen");
 }

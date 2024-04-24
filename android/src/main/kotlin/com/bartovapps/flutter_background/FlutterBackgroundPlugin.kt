@@ -24,11 +24,9 @@ class FlutterBackgroundPlugin: FlutterPlugin, MethodCallHandler {
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel : MethodChannel
-  private lateinit var context: Context
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "com.bartovapps.flutter_background/method_channel")
     channel.setMethodCallHandler(this)
-    context = flutterPluginBinding.applicationContext
   }
 
 
@@ -60,9 +58,7 @@ class FlutterBackgroundPlugin: FlutterPlugin, MethodCallHandler {
 
     if(appCallbackSaved || internalCallbackSaved){
       Log.i("FlutterBackgroundPlugin", "RawHandle saved, reinitializing the background emitter")
-      if(this::context.isInitialized){
-        BackgroundEmitter.initialize(context) //If any rawHandle saved (it means it changed or saved first time, reinitialize the emitter)
-      }
+      BackgroundEmitter.initialize(true) //If any rawHandle saved (it means it changed or saved first time, reinitialize the emitter)
     }
     result.success("")
   }
