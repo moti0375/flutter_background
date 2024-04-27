@@ -4,8 +4,12 @@ This plugin lets you send messages to the Dart side from background processes wh
 For example, send messages from Android BroadcastReceiver, Worker or Services or IOS background 
 fetch or any other native code which runs in background back to Dart side while app closed.
 
+If your Flutter app contains platform logic such as Android Service ActivityRecognition (Walking, Running, Vehicle etc'), battery status, WorkerManager
+or IOS BackgroundFetch, Silent Push or any processes that runs when app closed and doesn't use third party plugins,
+you can use this plugin to run dart code in background. 
+
 ## Getting Started
-Set your background callback with single parameter of type Map<String, dynamic> 
+Define a background callback with single parameter of type Map<String, dynamic> 
 in your app , (must be a top level function)
 
 ```dart
