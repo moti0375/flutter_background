@@ -21,7 +21,6 @@ public class BackgroundEmitter: NSObject{
     private var flutterEngine : FlutterEngine?
     private var eventsQueue = DispatchQueue.main
     private var pendingEvents: [[String: Any?]] = []
-
     
     func emitEvent(event: [String: Any?]){
         if(ready){
@@ -59,7 +58,13 @@ public class BackgroundEmitter: NSObject{
             os_log("About to run dart entry point: %@, url: %@", log: logger, type: .debug, internalEntryPointName!, internalEntryPointUrl)
             
             engine.run(withEntrypoint: internalEntryPointName, libraryURI: internalEntryPointUrl, initialRoute: nil)
+            
             initializeInternalMethodChannel(engine: engine)
+            guard let registrar = engine.registrar(forPlugin: "FlutterBackgroundPlugin")
+            else {
+                return
+            }
+            FlutterBackgroundPlugin.register(with: registrar)
         }
     }
     
@@ -72,7 +77,7 @@ public class BackgroundEmitter: NSObject{
     
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         os_log("handleMethodCall called - call %@", log: logger, type: .debug, "\(call.method)")
-        if (call.method == "FlutterBackground#Initialize") {
+        if (call.method == "FlutterBackground#OnListen") {
             self.ready = true //Flush pending events if exists (onListen)
             os_log("Internal method channel initialized (onListen)", log: logger, type: .debug)
             flushPendingEvents()

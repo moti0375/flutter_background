@@ -42,31 +42,30 @@ internal object BackgroundEmitter : MethodCallHandler {
 
     fun emitEventsToDart(event: Map<String, Any?>) {
         Log.i(LOG_TAG, "About to send: $event to Flutter in background")
-        if (ready) {
-            runAsync(operation = {
-                val appRawHandle = PluginStorage.getAppRawHandle()
-                val params = mapOf(ARG_APP_CALLBACK_HANDLE to appRawHandle, MESSAGE to event)
-                internalMethodChannel?.invokeMethod("FlutterBackground#BackgroundMessage", params)
-            }, error = {
-                Log.e(LOG_TAG, "Something went wrong: ${it.message}")
-            })
-        } else {
-            Log.i(LOG_TAG, "BackgroundEmitter not ready yet, enqueue event until it will be ready")
-            enqueuePendingEvent(event)
-            initializeBackgroundEmitter()
-        }
+            if (ready) {
+                runAsync(operation = {
+                    val appRawHandle = PluginStorage.getAppRawHandle()
+                    val params = mapOf(ARG_APP_CALLBACK_HANDLE to appRawHandle, MESSAGE to event)
+                    internalMethodChannel?.invokeMethod("FlutterBackground#BackgroundMessage", params)
+                }, error = {
+                    Log.e(LOG_TAG, "Something went wrong: ${it.message}")
+                })
+            } else {
+                Log.i(LOG_TAG, "BackgroundEmitter not ready yet, enqueue event until it will be ready")
+                enqueuePendingEvent(event)
+                if(PluginStorage.backgroundAllowed()){
+                    initializeBackgroundEmitter()
+                } else {
+                    Log.w(LOG_TAG, "No background callback was specified on dart side\nPlease use the registerBackgroundCallback api in main.dart to register your app background callback")
+                }
+            }
+        
+
     }
 
     private fun enqueuePendingEvent(event: Map<String, Any?>) {
         synchronized(pendingEventsQueue) {
             pendingEventsQueue.add(event)
-        }
-    }
-
-    private fun storeContext(context: Context){
-        if (!PluginStorage.backgroundAllowed()) {
-            Log.i(LOG_TAG, "Background work not allowed, To enable background use the registerBackgroundCallback in your app main.dart")
-            return
         }
     }
 
