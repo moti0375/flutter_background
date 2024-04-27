@@ -1,6 +1,6 @@
 # flutter_background
 
-This plugin lets you send messages the Dart side from background processes which runs on platform side.
+This plugin lets you send messages to the Dart side from background processes which runs on platform side.
 For example, send messages from Android BroadcastReceiver, Worker or Services or IOS background 
 fetch or any other native code which runs in background back to Dart side while app closed.
 
@@ -20,7 +20,7 @@ Register your background callback on main.dart
 ```dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterBackground().registerBackgroundCallback(appBackgroundCallback);
+  await FlutterBackground.instance.registerBackgroundCallback(appBackgroundCallback);
   runApp(const MyApp());
 }
 ```
@@ -40,10 +40,19 @@ class BootCompleteReceiver : BroadcastReceiver(){
 ## IOS Background Fetch:
 
 ```swift
+
+ BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.example.background_fetch_identifier", using: nil) { task in
+            self.handleAppRefresh(task: task as! BGAppRefreshTask)
+        }
+
+ let request = BGAppRefreshTaskRequest(identifier: "com.example.background_fetch_identifier")
+ BGTaskScheduler.shared.submit(request)
+
  private func handleAppRefresh(task: BGAppRefreshTask) {
         var event : [String: Any?] = [:]
         event["BackgroundFetchComplete"] = task.identifier
 
+        //Send event to Dart side
         FlutterBackgroundPlugin.emitBackgroundEvent(event: event)
     }
 ```

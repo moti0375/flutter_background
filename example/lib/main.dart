@@ -6,7 +6,7 @@ import 'package:flutter_background_example/background_callback.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterBackground().registerBackgroundCallback(appBackgroundCallback);
+  await FlutterBackground.instance.registerBackgroundCallback(appBackgroundCallback);
   runApp(const MyApp());
 }
 
