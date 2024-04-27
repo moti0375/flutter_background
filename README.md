@@ -6,11 +6,12 @@ fetch or any other native code which runs in background back to Dart side while 
 
 If your Flutter app contains platform logic such as Android Service ActivityRecognition (Walking, Running, Vehicle etc'), battery status, WorkerManager
 or IOS BackgroundFetch, Silent Push or any processes that runs when app closed and doesn't use third party plugins,
-you can use this plugin to run dart code in background. 
+you can use this plugin to send messages from these processes back to dart code in background. 
 
-## Getting Started
+## How to use this plugin
 Define a background callback with single parameter of type Map<String, dynamic> 
 in your app , (must be a top level function)
+Insure to mark it with ```@pragma('vm:entry-point')```
 
 ```dart
 @pragma('vm:entry-point')
